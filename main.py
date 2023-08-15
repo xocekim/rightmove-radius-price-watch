@@ -1,4 +1,5 @@
 import re
+import sqlite3
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -6,6 +7,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementNotInteractableException
 
+# setup db
+con = sqlite3.connect('rightmove.db')
+con.row_factory = sqlite3.Row
+cur = con.cursor()
+
+# setup selenium
 options = webdriver.ChromeOptions()
 options.add_argument("--disable-extensions")
 options.add_argument(
@@ -15,6 +22,8 @@ driver = webdriver.Chrome(options=options)
 driver.set_window_position(-1000, 0)
 driver.maximize_window()
 driver.implicitly_wait(2)
+
+# get root page
 driver.get("https://www.rightmove.co.uk/property-for-sale.html")
 
 # test for cookie banner
@@ -57,14 +66,33 @@ while page < 2:
 
     # iterate through results
     for _ in results:
+        p = {}
         prop_price_a = _.find_element(By.CSS_SELECTOR, 'a.propertyCard-salePrice')
-        prop_price = int(re.search(r'([\d,]+)', prop_price_a.text).group(1).replace(',', ''))
-        prop_id = int(re.search(r'properties\/(\d+)', prop_price_a.get_attribute('href')).group(1))
-        prop_address = _.find_element(By.CSS_SELECTOR, 'address').text
-        prop_type = _.find_element(By.CSS_SELECTOR, 'div.property-information > span.text').text
+        p['price'] = int(re.search(r'([\d,]+)', prop_price_a.text).group(1).replace(',', ''))
+        p['id'] = int(re.search(r'properties\/(\d+)', prop_price_a.get_attribute('href')).group(1))
+        p['address'] = _.find_element(By.CSS_SELECTOR, 'address').text
+        p['type'] = _.find_element(By.CSS_SELECTOR, 'div.property-information > span.text').text
         prop_agent = _.find_elements(By.CSS_SELECTOR, 'div.propertyCard-branchLogo > a')
-        prop_agent = prop_agent[0].get_attribute('title') if prop_agent else 'Private'
-        print(prop_id, prop_price, prop_address, prop_type, prop_agent)
+        p['agent'] = prop_agent[0].get_attribute('title') if prop_agent else 'Private'
+        print(p)
+
+        # check if property exists in db
+        cur.execute('SELECT id, price, address, type, agent FROM property WHERE id = :id', p)
+        entry = cur.fetchone()
+        if entry:
+            # check if any values have changed
+            changes = {k: entry[k] for k in entry.keys() if entry[k] != p[k]}
+            if changes:
+                # update property
+                for k, v in changes.items():
+                    cur.execute(f'UPDATE property SET {k} = ? WHERE id = ?', (p[k], p['id']))
+        else:
+            # insert new property
+            cur.execute('INSERT INTO property (id, price, address, type, agent, last_seen) '
+                        'VALUES (:id, :price, :address, :type, :agent, CURRENT_TIMESTAMP)', p)
+
+    # commit changes
+    con.commit()
 
     # break if no more pages
     next_page = driver.find_elements(By.CSS_SELECTOR, 'button.pagination-direction--next:not(disabled)')
