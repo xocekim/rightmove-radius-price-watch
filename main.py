@@ -1,5 +1,6 @@
 import re
 import sqlite3
+import time
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -21,7 +22,7 @@ options.add_argument(
 driver = webdriver.Chrome(options=options)
 driver.set_window_position(-1000, 0)
 driver.maximize_window()
-driver.implicitly_wait(2)
+driver.implicitly_wait(5)
 
 # get root page
 driver.get("https://www.rightmove.co.uk/property-for-sale.html")
@@ -55,9 +56,9 @@ except ElementNotInteractableException:
     pass
 
 # iterate through pages
-page = 1
-while page < 2:
+while True:
     # wait for results to load
+    time.sleep(1)
     try:
         results = WebDriverWait(driver, 10).until(EC.visibility_of_all_elements_located(
             (By.CSS_SELECTOR, 'div#l-searchResults > div > div.l-searchResult')))
@@ -95,11 +96,10 @@ while page < 2:
     con.commit()
 
     # break if no more pages
-    next_page = driver.find_elements(By.CSS_SELECTOR, 'button.pagination-direction--next:not(disabled)')
-    if next_page:
-        page += 1
-        driver.find_element(By.CSS_SELECTOR, 'button.pagination-direction--next').click()
-        continue
+    last_page = driver.find_element(By.CSS_SELECTOR, 'button.pagination-direction--next')
+    if last_page.get_attribute('disabled'):
+        break
+    last_page.click()
 
 
 driver.quit()
