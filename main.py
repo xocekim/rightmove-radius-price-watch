@@ -15,10 +15,6 @@ cur = con.cursor()
 
 # setup selenium
 options = webdriver.ChromeOptions()
-options.add_argument("--disable-extensions")
-options.add_argument(
-    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-    "AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/115.0.5790.170 Safari/537.36")
 driver = webdriver.Chrome(options=options)
 driver.set_window_position(-1000, 0)
 driver.maximize_window()
@@ -62,6 +58,8 @@ while True:
     try:
         results = WebDriverWait(driver, 10).until(EC.visibility_of_all_elements_located(
             (By.CSS_SELECTOR, 'div#l-searchResults > div > div.l-searchResult')))
+        last_page = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, 'button.pagination-direction--next')))
     except TimeoutException:
         break
 
@@ -76,27 +74,16 @@ while True:
         prop_agent = _.find_elements(By.CSS_SELECTOR, 'div.propertyCard-branchLogo > a')
         p['agent'] = prop_agent[0].get_attribute('title') if prop_agent else 'Private'
         print(p)
-
-        # check if property exists in db
-        cur.execute('SELECT id, price, address, type, agent FROM property WHERE id = :id', p)
-        entry = cur.fetchone()
-        if entry:
-            # check if any values have changed
-            changes = {k: entry[k] for k in entry.keys() if entry[k] != p[k]}
-            if changes:
-                # update property
-                for k, v in changes.items():
-                    cur.execute(f'UPDATE property SET {k} = ? WHERE id = ?', (p[k], p['id']))
-        else:
-            # insert new property
-            cur.execute('INSERT INTO property (id, price, address, type, agent, last_seen) '
-                        'VALUES (:id, :price, :address, :type, :agent, CURRENT_TIMESTAMP)', p)
+        # insert new property
+        cur.execute('INSERT INTO property (id, price, address, type, agent, last_seen) '
+                    'VALUES (:id, :price, :address, :type, :agent, CURRENT_TIMESTAMP) '
+                    'ON CONFLICT (id) DO UPDATE SET price=:price, address=:address, type=:type, '
+                    'agent=:agent, last_seen=CURRENT_TIMESTAMP', p)
 
     # commit changes
     con.commit()
 
     # break if no more pages
-    last_page = driver.find_element(By.CSS_SELECTOR, 'button.pagination-direction--next')
     if last_page.get_attribute('disabled'):
         break
     last_page.click()

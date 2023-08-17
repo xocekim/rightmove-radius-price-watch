@@ -14,31 +14,17 @@ CREATE TABLE property (
 CREATE TABLE history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   property_id INTEGER,
-  col TEXT,
-  old TEXT,
-  new TEXT,
-  ts DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(property_id) REFERENCES property(id)
+  price CURRENCY,
+  address TEXT,
+  type TEXT,
+  agent TEXT,
+  changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER price_update_trigger UPDATE OF price ON property
+CREATE OR REPLACE TRIGGER update_trigger UPDATE OF price, address, type, agent ON property
+WHEN old.price IS DISTINCT FROM new.price OR old.address IS DISTINCT FROM new.address OR old.type IS DISTINCT FROM new.type OR old.agent IS DISTINCT FROM new.agent
 BEGIN
-  INSERT INTO history (property_id, col, old, new) VALUES (old.id, 'PRICE', old.price, new.price);
-END;
-
-CREATE TRIGGER address_update_trigger UPDATE OF address ON property
-BEGIN
-  INSERT INTO history (property_id, col, old, new) VALUES (old.id, 'ADDRESS', old.address, new.address);
-END;
-
-CREATE TRIGGER type_update_trigger UPDATE OF type ON property
-BEGIN
-  INSERT INTO history (property_id, col, old, new) VALUES (old.id, 'TYPE', old.type, new.type);
-END;
-
-CREATE TRIGGER agent_update_trigger UPDATE OF agent ON property
-BEGIN
-  INSERT INTO history (property_id, col, old, new) VALUES (old.id, 'AGENT', old.agent, new.agent);
+  INSERT INTO history (property_id, price, address, type, agent) VALUES (old.id, old.price, old.address, old.type, old.agent);
 END;
 
 -- INSERT INTO property (id, price, address, type, agent) VALUES (1234, '75000', '1234 Main St', 'Detached', 'John Doe') ON CONFLICT(id) DO UPDATE SET price=excluded.price, address=excluded.address, type=excluded.type, agent=excluded.agent, last_seen=CURRENT_TIMESTAMP;
