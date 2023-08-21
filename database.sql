@@ -21,8 +21,14 @@ CREATE TABLE history (
   changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE OR REPLACE TRIGGER update_trigger UPDATE OF price, address, type, agent ON property
-WHEN old.price IS DISTINCT FROM new.price OR old.address IS DISTINCT FROM new.address OR old.type IS DISTINCT FROM new.type OR old.agent IS DISTINCT FROM new.agent
+CREATE VIEW v_price_history AS
+SELECT '<a target="_blank" href="https://www.rightmove.co.uk/properties/' || p.id || '">link</a>' AS link, PRINTF("£%.0f", p.price) AS price, PRINTF("£%.0f", h.price) AS old_price, p.address, p.type, h.changed_at
+    FROM history AS h
+    LEFT JOIN property AS p ON p.id = h.property_id
+    ORDER BY changed_at;
+
+CREATE TRIGGER update_trigger UPDATE OF price, address, type, agent ON property
+WHEN old.price IS NOT new.price OR old.address IS NOT new.address OR old.type IS NOT new.type OR old.agent IS NOT new.agent
 BEGIN
   INSERT INTO history (property_id, price, address, type, agent) VALUES (old.id, old.price, old.address, old.type, old.agent);
 END;
