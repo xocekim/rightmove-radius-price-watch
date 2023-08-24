@@ -20,11 +20,9 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-gpu')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("--window-size=1920,1200")
-# options.binary_location = '/snap/bin/chromium'
-# options.add_argument('--chromedriver-binary=/snap/bin/chromium.chromedriver')
-options.add_argument('--headless')
+# options.binary_location = """C:\Program Files\Google\Chrome Beta\Application\chrome.exe"""
 driver = webdriver.Chrome(options=options)
-driver.set_window_position(-1000, 0)
+# driver.set_window_position(-1000, 0)
 driver.maximize_window()
 driver.implicitly_wait(5)
 
@@ -37,17 +35,18 @@ try:
 except NoSuchElementException:
     pass
 
-# set location
-driver.find_element(By.ID, "searchLocation").send_keys("Lytham")
-driver.find_element(By.CSS_SELECTOR, 'ul#typeAheadResult > li').click()
-driver.find_element(By.ID, 'initialSearch').submit()
+# set location and click search
+driver.find_element(By.CSS_SELECTOR, "input.ksc_typeAheadInputField").send_keys("Lytham")
+driver.find_element(By.CSS_SELECTOR, "button.ksc_button[color=primary]").click()
 
 # set filters
 driver.find_element(By.CSS_SELECTOR, '#radius option[value="1.0"]').click()
 
 # set min/max price
-driver.find_element(By.CSS_SELECTOR, 'select[name="minPrice"] option[value="175000"]').click()
-driver.find_element(By.CSS_SELECTOR, 'select[name="maxPrice"] option[value="270000"]').click()
+driver.find_element(
+    By.CSS_SELECTOR, 'select[name="minPrice"] option[value="175000"]').click()
+driver.find_element(
+    By.CSS_SELECTOR, 'select[name="maxPrice"] option[value="270000"]').click()
 
 # include under offer and sold
 driver.find_element(By.CSS_SELECTOR, 'label[for="includeSSTC"]').click()
@@ -55,7 +54,8 @@ driver.find_element(By.ID, "propertySearchCriteria").submit()
 
 # sort by lowest price
 try:
-    driver.find_element(By.CSS_SELECTOR, 'select[id="sortType"] option[value="1"]').click()
+    driver.find_element(
+        By.CSS_SELECTOR, 'select[id="sortType"] option[value="1"]').click()
 except ElementNotInteractableException:
     pass
 
@@ -74,13 +74,19 @@ while True:
     # iterate through results
     for _ in results:
         p = {}
-        prop_price_a = _.find_element(By.CSS_SELECTOR, 'a.propertyCard-salePrice')
-        p['price'] = int(re.search(r'([\d,]+)', prop_price_a.text).group(1).replace(',', ''))
-        p['id'] = int(re.search(r'properties\/(\d+)', prop_price_a.get_attribute('href')).group(1))
+        prop_price_a = _.find_element(
+            By.CSS_SELECTOR, 'a.propertyCard-salePrice')
+        p['price'] = int(
+            re.search(r'([\d,]+)', prop_price_a.text).group(1).replace(',', ''))
+        p['id'] = int(re.search(r'properties\/(\d+)',
+                      prop_price_a.get_attribute('href')).group(1))
         p['address'] = _.find_element(By.CSS_SELECTOR, 'address').text
-        p['type'] = _.find_element(By.CSS_SELECTOR, 'div.property-information > span.text').text
-        prop_agent = _.find_elements(By.CSS_SELECTOR, 'div.propertyCard-branchLogo > a')
-        p['agent'] = prop_agent[0].get_attribute('title') if prop_agent else 'Private'
+        p['type'] = _.find_element(
+            By.CSS_SELECTOR, 'div.property-information > span.text').text
+        prop_agent = _.find_elements(
+            By.CSS_SELECTOR, 'div.propertyCard-branchLogo > a')
+        p['agent'] = prop_agent[0].get_attribute(
+            'title') if prop_agent else 'Private'
         print(p)
         # insert new property
         cur.execute('INSERT INTO property (id, price, address, type, agent, last_seen) '
