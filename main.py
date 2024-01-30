@@ -37,7 +37,7 @@ except NoSuchElementException:
 
 # set location and click search
 driver.find_element(By.CSS_SELECTOR, "input.ksc_typeAheadInputField").send_keys("Lytham")
-driver.find_element(By.CSS_SELECTOR, "button.ksc_button[color=primary]").click()
+driver.find_element(By.CSS_SELECTOR, "button.dsrm_button").click()
 
 # set filters
 driver.find_element(By.CSS_SELECTOR, '#radius option[value="1.0"]').click()
@@ -74,12 +74,10 @@ while True:
     # iterate through results
     for _ in results:
         p = {}
-        prop_price_a = _.find_element(
-            By.CSS_SELECTOR, 'a.propertyCard-salePrice')
-        p['price'] = int(
-            re.search(r'([\d,]+)', prop_price_a.text).group(1).replace(',', ''))
-        p['id'] = int(re.search(r'properties\/(\d+)',
-                      prop_price_a.get_attribute('href')).group(1))
+        prop_price_a = _.find_element(By.CSS_SELECTOR, 'a.propertyCard-salePrice')
+        p['price'] = re.search(r'([\d,]+)', prop_price_a.text)
+        p['price'] = int(p['price'].group(1).replace(',', '')) if p['price'] else -1
+        p['id'] = int(re.search(r'properties\/(\d+)', prop_price_a.get_attribute('href')).group(1))
         p['address'] = _.find_element(By.CSS_SELECTOR, 'address').text
         p['type'] = _.find_element(
             By.CSS_SELECTOR, 'div.property-information > span.text').text
@@ -87,7 +85,6 @@ while True:
             By.CSS_SELECTOR, 'div.propertyCard-branchLogo > a')
         p['agent'] = prop_agent[0].get_attribute(
             'title') if prop_agent else 'Private'
-        print(p)
         # insert new property
         cur.execute('INSERT INTO property (id, price, address, type, agent, last_seen) '
                     'VALUES (:id, :price, :address, :type, :agent, CURRENT_TIMESTAMP) '

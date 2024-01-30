@@ -1,0 +1,13 @@
+[Unit]
+Description=rightmove service
+After=network.target
+
+[Service]
+Type=idle
+Restart=on-failure
+User=pi
+ExecStart=/home/pi/rightmove-radius-price-watch/venv/bin/sqlite_web -r -x /home/pi/rightmove-radius-price-watch/rightmove.db
+WorkingDirectory=/home/pi/rightmove-radius-price-watch
+
+[Install]
+WantedBy=multi-user.target

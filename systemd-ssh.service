@@ -1,0 +1,12 @@
+[Unit]
+Description=rightmove service
+After=network.target
+
+[Service]
+Type=idle
+Restart=on-failure
+User=pi
+ExecStart=ssh -i /home/pi/.ssh/houses_ed25519 -R houses.xoce.kim:80:localhost:8080 serveo.net
+
+[Install]
+WantedBy=multi-user.target
