@@ -1,0 +1,9 @@
+[Unit]
+Description=rightmove scraper
+
+[Service]
+Type=oneshot
+User=pi
+ExecStart=/home/pi/rightmove-radius-price-watch/venv/bin/python /home/pi/rightmove-radius-price-watch/main.py
+WorkingDirectory=/home/pi/rightmove-radius-price-watch
+

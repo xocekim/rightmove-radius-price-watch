@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 Type=idle
-Restart=on-failure
+Restart=always
+RestartSec=5m
 User=pi
 ExecStart=ssh -i <id_25519> -R <your_domain>:80:localhost:8080 serveo.net
 
