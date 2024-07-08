@@ -3,9 +3,11 @@
 {% block content %}
 {% for p in properties %}
 <div class="grid">
+    <a href="https://rightmove.co.uk/properties/{{ p.id }}">
     <img src="{{ p.img }}"/>
+    </a>
+    <p>&pound;{{ p.price }}</p>
     <div>
-        <p>&pound;{{ p.price }}</p>
         <p>{{ p.type }}</p>
         <p>{{ p.agent }}</p>
     </div>
