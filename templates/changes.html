@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% macro myval(old, new) -%}
+    {% if old != new %}
+    {{ new }} != <span style="color: red;">{{ old }}</span>
+    {% endif %}
+{%- endmacro %}
+
+{% block title %}Changed Properties{% endblock %}
+{% block content %}
+{% for p in properties %}
+<div class="grid">
+    <a href="https://rightmove.co.uk/properties/{{ p.property_id }}">
+    <img src="{{ p.property_img }}"/>
+    </a>
+    <div>
+        <p>&pound;{{ myval(p.property_price, p.history_price) }}</p>
+        <p>{{ myval(p.property_address, p.history_address) }}</p>
+        <p>{{ myval(p.property_type, p.history_type) }}</p>
+        <p>{{ myval(p.property_agent, p.history_agent) }}</p>
+        <p>{{ myval(p.property_img, p.history_img) }}</p>
+    </div>
+    <div>
+        {{ p.first_seen }}
+    </div>
+
+</div>
+{% endfor %}
+{% endblock %}

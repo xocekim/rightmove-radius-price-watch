@@ -7,6 +7,7 @@ CREATE TABLE property (
   address TEXT,
   type TEXT,
   agent TEXT,
+  img TEXT,
   first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -18,36 +19,36 @@ CREATE TABLE history (
   address TEXT,
   type TEXT,
   agent TEXT,
+  img TEXT,
   changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE VIEW v_price_history AS
-SELECT '<a target="_blank" href="https://www.rightmove.co.uk/properties/' || p.id || '">link</a>' AS link, 
-        PRINTF("£%,d", p.price) AS price, 
-        PRINTF("£%,d", h.price) AS old_price, 
-        PRINTF("%+,d", p.price - h.price) AS price_change,
-        p.address, 
-        p.type, 
-        h.changed_at
-    FROM history AS h
-    LEFT JOIN property AS p ON p.id = h.property_id
-    ORDER BY changed_at DESC;
+CREATE VIEW v_price_history AS 
+SELECT
+    p.id AS property_id,
+    p.price AS property_price,
+    p.address AS property_address,
+    p.type AS property_type,
+    p.agent AS property_agent,
+    p.img AS property_img,
+    p.first_seen AS property_first_seen,
+    p.last_seen AS property_last_seen,
+    h.id AS history_id,
+    h.price AS history_price,
+    h.address AS history_address,
+    h.type AS history_type,
+    h.agent AS history_agent,
+    h.img AS history_img,
+    h.changed_at AS history_changed_at
+FROM
+    history h
+LEFT JOIN
+    property p ON h.property_id = p.id;
 
-CREATE VIEW v_new_properties_7days AS
-SELECT '<a target="_blank" href="https://www.rightmove.co.uk/properties/' || p.id || '">link</a>' AS link, 
-        PRINTF("£%,d", p.price) AS price,
-        p.address,
-        p.type,
-        p.agent,
-        p.first_seen
-    FROM property AS p
-    WHERE first_seen BETWEEN DATETIME('now', '-7 days') AND DATETIME('now')
-    ORDER BY first_seen DESC;
 
 CREATE TRIGGER update_trigger UPDATE OF price, address, type, agent ON property
-WHEN old.price IS NOT new.price OR old.address IS NOT new.address OR old.type IS NOT new.type OR old.agent IS NOT new.agent
+WHEN old.price IS NOT new.price OR old.address IS NOT new.address OR old.type IS NOT new.type OR old.agent IS NOT new.agent OR old.img IS NOT new.img
 BEGIN
-  INSERT INTO history (property_id, price, address, type, agent) VALUES (old.id, old.price, old.address, old.type, old.agent);
+  INSERT INTO history (property_id, price, address, type, agent, img) VALUES (old.id, old.price, old.address, old.type, old.agent, old.img);
 END;
 
--- INSERT INTO property (id, price, address, type, agent) VALUES (1234, '75000', '1234 Main St', 'Detached', 'John Doe') ON CONFLICT(id) DO UPDATE SET price=excluded.price, address=excluded.address, type=excluded.type, agent=excluded.agent, last_seen=CURRENT_TIMESTAMP;

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}All Properties{% endblock %}
+{% block content %}
+{% for p in properties %}
+<div class="grid">
+    <img src="{{ p.img }}"/>
+    <div>
+        <p>&pound;{{ p.price }}</p>
+        <p>{{ p.type }}</p>
+        <p>{{ p.agent }}</p>
+    </div>
+    <div>
+        {{ p.first_seen }}
+    </div>
+
+</div>
+{% endfor %}
+{% endblock %}
