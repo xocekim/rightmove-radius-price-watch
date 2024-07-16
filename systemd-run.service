@@ -1,9 +1,12 @@
 [Unit]
 Description=rightmove scraper
+After=network.target
 
 [Service]
 Type=oneshot
-User=pi
-ExecStart=/home/pi/rightmove-radius-price-watch/venv/bin/python /home/pi/rightmove-radius-price-watch/main.py
-WorkingDirectory=/home/pi/rightmove-radius-price-watch
+ExecStart=/home/rocky/.local/venv/bin/python main2.py
+WorkingDirectory=/home/rocky/rightmove-radius-price-watch
+
+[Install]
+WantedBy=default.target
 

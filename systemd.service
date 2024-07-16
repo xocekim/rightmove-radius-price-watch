@@ -3,11 +3,10 @@ Description=rightmove service
 After=network.target
 
 [Service]
-Type=idle
-Restart=on-failure
-User=pi
-ExecStart=/home/pi/rightmove-radius-price-watch/venv/bin/sqlite_web -r -x /home/pi/rightmove-radius-price-watch/rightmove.db
-WorkingDirectory=/home/pi/rightmove-radius-price-watch
+Type=simple
+Restart=always
+ExecStart=/home/rocky/.local/venv/bin/python /home/rocky/.local/venv/bin/flask --app server run --port 8081
+WorkingDirectory=/home/rocky/rightmove-radius-price-watch
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

@@ -26,7 +26,7 @@ def close_connection(exception):
 @app.route("/")
 def index():
     con = get_db()
-    properties = con.execute("SELECT * FROM property ORDER BY first_seen LIMIT 10")
+    properties = con.execute("SELECT * FROM property ORDER BY first_seen DESC LIMIT 10")
     return render_template("index.html", properties=properties)
 
 
